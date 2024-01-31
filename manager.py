@@ -5,6 +5,24 @@ from datetime import datetime
 from config import Config
 
 class Manager:
+    """
+    def __init__(self, config_obj):
+        self.balance_file = config_obj.balance_file
+        self.warehouse_file = config_obj.warehouse_file
+        self.review_file = config_obj.review_file
+
+        # Create a dictionary to map task names to methods
+        self.task_mapping = {
+            "balance": self.f_balance,
+            "sale": self.f_sale,
+            "purchase": self.f_purchase,
+            "account": self.f_account,
+            "list": self.f_list,
+            "warehouse": self.f_warehouse,
+            "review": self.f_review
+        }
+
+    """
     def __init__(self, config_obj=None):
         if config_obj is not None:
             self.balance_file = config_obj.balance_file
@@ -15,6 +33,7 @@ class Manager:
             self.balance_file = "balance.txt"
             self.warehouse_file = "warehouse.txt"
             self.review_file = "review.txt"
+
 
     def load_data(self):
         Config.create_files(self)
@@ -53,20 +72,25 @@ class Manager:
             data["v_balance"] += value
             transaction_desc = f"Balance {value}"
         elif transaction_type == "sale":
-            total_price = value * quantity
-            data["v_sale"] += total_price
+            total_price = value
+            data["v_balance"] += total_price
+            data["v_warehouse"].setdefault(product_name, {"v_price": value, "v_quantity": quantity})
             data["v_warehouse"][product_name]["v_quantity"] -= quantity
             transaction_desc = f"Selling {quantity} units of {product_name} for {total_price}"
+            print(transaction_desc)
         elif transaction_type == "purchase":
-            total_price = value * quantity
+            total_price = value
             data["v_balance"] -= total_price
             data["v_warehouse"].setdefault(product_name, {"v_price": value, "v_quantity": 0})
             data["v_warehouse"][product_name]["v_quantity"] += quantity
             transaction_desc = f"Purchasing {quantity} units of {product_name} for {total_price}"
+            print(transaction_desc)
 
         review.append(f"{date_transaction};{transaction_desc};{value}")
         data["v_review"] = review
         return data
+
+
 
     def f_balance(self, data):
         try:
@@ -83,7 +107,7 @@ class Manager:
 
         return data
 
-    def f_sale(self, data):
+    def f_sale(self, data, *args, **kwargs):
         v_warehouse = data.get("v_warehouse", {})
 
         if not v_warehouse:
@@ -103,10 +127,8 @@ class Manager:
 
             total_price = v_warehouse[s_name]["v_price"] * s_quantity
             data = self.add_transaction(data, "sale", total_price, s_name, s_quantity)
-
         except ValueError:
             print("Sorry, you did not input a valid value.\n")
-
         return data
 
     def f_purchase(self, data):
@@ -121,7 +143,7 @@ class Manager:
             v_price = float(input(f"Insert the unit price of {v_name}: "))
             v_quantity = int(input(f"Insert the quantity of {v_name}: "))
 
-            total_price = v_price * v_quantity
+            total_price = v_price
             if total_price > actual_balance:
                 print(f"Sorry, you do not have a balance enough to make this purchase.\n"
                       f"Your actual balance is {actual_balance}.")
@@ -184,3 +206,61 @@ class Manager:
                 print(f"{date_transaction} - {transaction} - {v_value}")
 
         return data
+
+    def assign(self, option, data):
+        """
+        Assign tasks to the appropriate operations in the accounting system.
+
+        Parameters:
+        - task_type: A string representing the type of task to be assigned.
+        - kwargs: Additional keyword arguments specific to the task type.
+
+        Returns:
+        - Updated data dictionary.
+        """
+        # Check if the task type is in the mapping dictionary
+        if option == 1:
+            data = self.f_balance(data)
+            print(f"Your new balance is: {data['v_balance']}")
+        elif option == 2:
+            data = self.f_sale(data)
+        elif option == 3:
+            data = self.f_purchase(data)
+        elif option == 4:
+            data = self.f_account(data)
+        elif option == 5:
+            data = self.f_list(data)
+        elif option == 6:
+            data = self.f_warehouse(data)
+        elif option == 7:
+            data = self.f_review(data)
+
+
+    # def assign(self, task_type, **kwargs):
+    #     """
+    #     Assign tasks to the appropriate operations in the accounting system.
+    #
+    #     Parameters:
+    #     - task_type: A string representing the type of task to be assigned.
+    #     - kwargs: Additional keyword arguments specific to the task type.
+    #
+    #     Returns:
+    #     - Updated data dictionary.
+    #     """
+    #     if task_type == "balance":
+    #         return self.f_balance(self.data, **kwargs)
+    #     elif task_type == "sale":
+    #         return self.f_sale(self.data, **kwargs)
+    #     elif task_type == "purchase":
+    #         return self.f_purchase(self.data, **kwargs)
+    #     elif task_type == "account":
+    #         return self.f_account(self.data, **kwargs)
+    #     elif task_type == "list":
+    #         return self.f_list(self.data, **kwargs)
+    #     elif task_type == "warehouse":
+    #         return self.f_warehouse(self.data, **kwargs)
+    #     elif task_type == "review":
+    #         return self.f_review(self.data, **kwargs)
+    #     else:
+    #         print(f"Invalid task type: {task_type}")
+    #         return self.data

@@ -20,26 +20,45 @@ def main():
                                  "7 - Review\n"
                                  "0 - End\n\n"))
 
+
             if v_option == 0:
                 manager.save_data(data)
                 print("\nThank you for using our system.\n\n")
                 exit()
-            elif v_option == 1:
-                data = manager.f_balance(data)
-            elif v_option == 2:
-                data = manager.f_sale(data)
-            elif v_option == 3:
-                data = manager.f_purchase(data)
-            elif v_option == 4:
-                data = manager.f_account(data)
-            elif v_option == 5:
-                data = manager.f_list(data)
-            elif v_option == 6:
-                data = manager.f_warehouse(data)
-            elif v_option == 7:
-                data = manager.f_review(data)
+            elif 1 <= v_option <= 7:
+                manager.assign(v_option, data)
+            # elif v_option == 1:
+            #     data = manager.f_balance(data)
+            #     print(f"Your new balance is: {data['v_balance']}")
+            # elif v_option == 2:
+            #     data = manager.f_sale(data)
+            # elif v_option == 3:
+            #     data = manager.f_purchase(data)
+            # elif v_option == 4:
+            #     data = manager.f_account(data)
+            # elif v_option == 5:
+            #     data = manager.f_list(data)
+            # elif v_option == 6:
+            #     data = manager.f_warehouse(data)
+            # elif v_option == 7:
+            #     data = manager.f_review(data)
+            else:
+                print("Invalid option. Please enter a valid option number.")
+
+            #elif v_option == "balance":
+            #    data = manager.assign("balance", action=1, value=100)
+
+            #elif v_option == "sale":
+            #    data = manager.f_sale(data)
+            #    data = manager.assign("sale", name="a", quantity=2)
+            #data = manager.assign("sale", name="a", quantity=2)
+    except ValueError as ve:
+        print(f"Invalid input: {ve}")
+
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
 
 if __name__ == "__main__":
     main()
