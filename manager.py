@@ -5,24 +5,6 @@ from datetime import datetime
 from config import Config
 
 class Manager:
-    """
-    def __init__(self, config_obj):
-        self.balance_file = config_obj.balance_file
-        self.warehouse_file = config_obj.warehouse_file
-        self.review_file = config_obj.review_file
-
-        # Create a dictionary to map task names to methods
-        self.task_mapping = {
-            "balance": self.f_balance,
-            "sale": self.f_sale,
-            "purchase": self.f_purchase,
-            "account": self.f_account,
-            "list": self.f_list,
-            "warehouse": self.f_warehouse,
-            "review": self.f_review
-        }
-
-    """
     def __init__(self, config_obj=None):
         if config_obj is not None:
             self.balance_file = config_obj.balance_file
@@ -34,6 +16,49 @@ class Manager:
             self.warehouse_file = "warehouse.txt"
             self.review_file = "review.txt"
 
+    ##########################################  START OF DECORATORs  ##########################################
+    def add_to_review(self, transaction):
+        data = self.load_data()
+        v_review = data.get("v_review", [])
+        v_review.append(transaction)
+        data["v_review"] = v_review
+        self.save_data(data)
+
+    ## log_transaction:
+    ### This decorator logs the details of the transaction (timestamp, type, and value) to the review file.
+    ### It uses the function name as the transaction description.
+    def log_transaction(func):
+        def wrapper(self, *args, **kwargs):
+            result = func(self, *args, **kwargs)
+            date_transaction = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+            transaction_desc = func.__name__.capitalize()  # Using the function name as the transaction description
+            value = kwargs.get("value", 0)
+            self.add_to_review(f"{date_transaction};{transaction_desc};{value}")
+            return result
+        return wrapper
+
+    ## validate_quantity:
+    ### This decorator ensures that the quantity provided in the quantity keyword argument is non-negative.
+    ### If a negative quantity is detected, it prints an error message and skips the execution of the decorated function.
+    def validate_quantity(func):
+        def wrapper(self, *args, **kwargs):
+            quantity = kwargs.get("quantity", 0)
+            if quantity < 0:
+                print("Invalid quantity. Please enter a non-negative quantity.")
+                return
+            return func(self, *args, **kwargs)
+        return wrapper
+
+    def validate_price(func):
+        def wrapper(self, *args, **kwargs):
+            price = kwargs.get("price", 0)
+            if price < 0:
+                print("Invalid price. Please enter a non-negative price.")
+                return
+            return func(self, *args, **kwargs)
+        return wrapper
+
+##########################################  END OF DECORATORs  ##########################################
 
     def load_data(self):
         Config.create_files(self)
@@ -91,8 +116,8 @@ class Manager:
         return data
 
 
-
-    def f_balance(self, data):
+    @log_transaction
+    def f_balance(self, data, *args, **kwargs):
         try:
             v_action = int(input("Press '1' to Add or press '2' to Subtract: "))
             if v_action not in {1, 2}:
@@ -107,6 +132,9 @@ class Manager:
 
         return data
 
+
+    @log_transaction
+    @validate_quantity
     def f_sale(self, data, *args, **kwargs):
         v_warehouse = data.get("v_warehouse", {})
 
@@ -131,7 +159,11 @@ class Manager:
             print("Sorry, you did not input a valid value.\n")
         return data
 
-    def f_purchase(self, data):
+
+    @log_transaction
+    @validate_quantity
+    @validate_price
+    def f_purchase(self, data, *args, **kwargs):
         actual_balance = data.get("v_balance", 0)
 
         if actual_balance <= 0:
@@ -234,33 +266,3 @@ class Manager:
             data = self.f_warehouse(data)
         elif option == 7:
             data = self.f_review(data)
-
-
-    # def assign(self, task_type, **kwargs):
-    #     """
-    #     Assign tasks to the appropriate operations in the accounting system.
-    #
-    #     Parameters:
-    #     - task_type: A string representing the type of task to be assigned.
-    #     - kwargs: Additional keyword arguments specific to the task type.
-    #
-    #     Returns:
-    #     - Updated data dictionary.
-    #     """
-    #     if task_type == "balance":
-    #         return self.f_balance(self.data, **kwargs)
-    #     elif task_type == "sale":
-    #         return self.f_sale(self.data, **kwargs)
-    #     elif task_type == "purchase":
-    #         return self.f_purchase(self.data, **kwargs)
-    #     elif task_type == "account":
-    #         return self.f_account(self.data, **kwargs)
-    #     elif task_type == "list":
-    #         return self.f_list(self.data, **kwargs)
-    #     elif task_type == "warehouse":
-    #         return self.f_warehouse(self.data, **kwargs)
-    #     elif task_type == "review":
-    #         return self.f_review(self.data, **kwargs)
-    #     else:
-    #         print(f"Invalid task type: {task_type}")
-    #         return self.data
