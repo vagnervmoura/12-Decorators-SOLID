@@ -23,3 +23,10 @@ Hints:
 - You can define the decorators within the `Manager` class. If defined within the class, they should take `self` as the first argument.
 - For the `assign` method, consider how tasks can be mapped to methods in your class. This might involve using a dictionary or similar data structure to map string task names to methods.
 - Remember to use the `self` keyword to refer to instance variables and methods within the class.
+
+
+
+
+
+
+
